@@ -37,6 +37,10 @@ dependencies:
   cupertino_icons: ^1.0.5
   path: ^1.8.3
   network_info_plus: ^4.0.1
+  flutter_background_service: ^3.0.1
+  flutter_local_notifications: ^15.1.0+1
+  shared_preferences: ^2.2.0
+  device_info_plus: ^9.0.2
 
 dev_dependencies:
   flutter_test:

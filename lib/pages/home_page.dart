@@ -1,15 +1,17 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:network_info_plus/network_info_plus.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({Key? key}) : super(key: key);
-
   @override
   State<HomePage> createState() => _HomePageState();
 }
 
 class _HomePageState extends State<HomePage> {
+
+  final info = NetworkInfo();
 
   @override
   void initState() {
@@ -25,14 +27,15 @@ class _HomePageState extends State<HomePage> {
       appBar: AppBar(
         title: const Text("HTTP Server"),
       ),
-      body: Text("Information: "),
+      body: const Text("Information: "),
     );
   }
 
   void startFileServer(String folderPath) async {
-    final server = await HttpServer.bind(InternetAddress.anyIPv4, 8080);
+    final ipAddr = await info.getWifiIP();
+    final server = await HttpServer.bind(ipAddr, 8080);
     debugPrint('Server running on port ${server.port}');
-    debugPrint("Server running on IP: ${InternetAddress.anyIPv4}");
+    debugPrint("Server running on IP: $ipAddr");
 
     await for (HttpRequest request in server) {
       final requestedPath = request.uri.path;
