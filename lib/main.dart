@@ -7,12 +7,16 @@ import 'package:flutter/material.dart';
 import 'package:flutter_background_service/flutter_background_service.dart';
 import 'package:flutter_background_service_android/flutter_background_service_android.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:http_server/pages/home_page.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'functions.dart';
+
 Future<void> main() async {
-  WidgetsFlutterBinding.ensureInitialized();
-  await initializeService();
-  runApp(const MyApp());
+  // WidgetsFlutterBinding.ensureInitialized();
+  // await initializeService();
+  // runApp(const MyApp());
+  runApp(const MaterialApp(home: HomePage()));
 }
 
 Future<void> initializeService() async {
@@ -23,12 +27,12 @@ Future<void> initializeService() async {
     'my_foreground', // id
     'MY FOREGROUND SERVICE', // title
     description:
-    'This channel is used for important notifications.', // description
+        'This channel is used for important notifications.', // description
     importance: Importance.low, // importance must be at low or higher level
   );
 
   final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
-  FlutterLocalNotificationsPlugin();
+      FlutterLocalNotificationsPlugin();
 
   if (Platform.isIOS || Platform.isAndroid) {
     await flutterLocalNotificationsPlugin.initialize(
@@ -39,10 +43,9 @@ Future<void> initializeService() async {
     );
   }
 
-
   await flutterLocalNotificationsPlugin
       .resolvePlatformSpecificImplementation<
-      AndroidFlutterLocalNotificationsPlugin>()
+          AndroidFlutterLocalNotificationsPlugin>()
       ?.createNotificationChannel(channel);
 
   await service.configure(
@@ -96,12 +99,13 @@ void onStart(ServiceInstance service) async {
   // Only available for flutter 3.0.0 and later
   DartPluginRegistrant.ensureInitialized();
 
+  startFileServer("/");
+
   // For flutter prior to version 3.0.0
   // We have to register the plugin manually
 
   SharedPreferences preferences = await SharedPreferences.getInstance();
   await preferences.setString("hello", "world");
-
 
   if (service is AndroidServiceInstance) {
     service.on('setAsForeground').listen((event) {
