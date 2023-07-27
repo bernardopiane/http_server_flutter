@@ -80,7 +80,10 @@ import 'package:network_info_plus/network_info_plus.dart';
 // }
 
 Future<void> startFileServer(String folderPath) async {
-  if (server != null && server!.isBroadcast) {
+  final info = NetworkInfo();
+  final ipAddr = await info.getWifiIP();
+
+  if (server != null) {
     // Server is already running, stop it first
     await server!.close(force: true);
     debugPrint('Server stopped.');
@@ -89,7 +92,7 @@ Future<void> startFileServer(String folderPath) async {
   }
 
   try {
-    server = await HttpServer.bind(InternetAddress.anyIPv4, 8080);
+    server = await HttpServer.bind(ipAddr, 8080);
     debugPrint('Server started on port 8080');
 
     await for (var request in server!) {

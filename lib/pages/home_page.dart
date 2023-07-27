@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:http_server/widgets/start_server_button.dart';
 import 'package:network_info_plus/network_info_plus.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:qr_flutter/qr_flutter.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({Key? key}) : super(key: key);
@@ -13,15 +14,14 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-  final info = NetworkInfo();
   String selectedFolder = "";
+  final info = NetworkInfo();
+  String? ipAddr;
 
   @override
   void initState() {
     super.initState();
-    // const selectedFolderPath =
-    //     '/'; // Replace with the path to your selected folder
-    // startFileServer(selectedFolderPath);
+    getIP();
   }
 
   @override
@@ -32,15 +32,26 @@ class _HomePageState extends State<HomePage> {
       ),
       body: Column(
         children: [
-          const Text("Information: "),
-          Text("Selected Folder: $selectedFolder"),
-          ElevatedButton(
-            onPressed: () {
-              openFilePicker(context);
-            },
-            child: const Text('Select File'),
+          Flexible(
+            child: Column(
+              children: [
+                const Text("Information: "),
+                Text("Selected Folder: $selectedFolder"),
+                ElevatedButton(
+                  onPressed: () {
+                    openFilePicker(context);
+                  },
+                  child: const Text('Select Folder'),
+                ),
+                StartServerButton(dir: selectedFolder),
+              ],
+            ),
           ),
-          StartServerButton(dir: selectedFolder)
+          if (ipAddr != null && ipAddr != "")
+            QrImageView(
+              data: "http://${ipAddr}:8080",
+              version: QrVersions.auto,
+            ),
         ],
       ),
     );
@@ -77,5 +88,13 @@ class _HomePageState extends State<HomePage> {
         selectedFolder = filePath;
       });
     }
+  }
+
+  Future<void> getIP() async {
+    String? ip = await info.getWifiIP();
+    debugPrint("IP: $ip");
+    setState(() {
+      ipAddr = ip;
+    });
   }
 }

@@ -22,7 +22,7 @@ class _StartServerButtonState extends State<StartServerButton> {
   Widget build(BuildContext context) {
     return ElevatedButton(
         onPressed: () {
-          if(widget.dir != null && widget.dir != ""){
+          if(widget.dir != ""){
             startFileServer(widget.dir);
             setState(() {
               isRunning = !isRunning;
