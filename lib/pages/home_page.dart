@@ -1,11 +1,12 @@
 import 'dart:io';
 
-import 'package:filesystem_picker/filesystem_picker.dart';
 import 'package:flutter/material.dart';
-import 'package:http_server/widgets/start_server_button.dart';
+import 'package:http_server/functions.dart';
 import 'package:network_info_plus/network_info_plus.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:permission_handler/permission_handler.dart';
 import 'package:qr_flutter/qr_flutter.dart';
+import 'package:saf/saf.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({Key? key}) : super(key: key);
@@ -35,7 +36,7 @@ class _HomePageState extends State<HomePage> {
           Flexible(
             child: Column(
               children: [
-                const Text("Information: "),
+                Text("IP: ${ipAddr.toString()}"),
                 Text("Selected Folder: $selectedFolder"),
                 ElevatedButton(
                   onPressed: () {
@@ -43,14 +44,19 @@ class _HomePageState extends State<HomePage> {
                   },
                   child: const Text('Select Folder'),
                 ),
-                StartServerButton(dir: selectedFolder),
               ],
             ),
           ),
           if (ipAddr != null && ipAddr != "")
-            QrImageView(
-              data: "http://${ipAddr}:8080",
-              version: QrVersions.auto,
+            Center(
+              child: SizedBox(
+                height: 200,
+                width: 200,
+                child: QrImageView(
+                  data: "http://$ipAddr:8080",
+                  version: QrVersions.auto,
+                ),
+              ),
             ),
         ],
       ),
@@ -72,22 +78,49 @@ class _HomePageState extends State<HomePage> {
       return;
     }
 
-    String? filePath = await FilesystemPicker.open(
-      title: 'Select a folder',
-      rootDirectory: rootDirectory,
-      fsType: FilesystemType.folder,
-      pickText: 'Select',
-      folderIconColor: Colors.teal,
-      context: context,
-    );
+    // if(!mounted){
+    //   return;
+    // }
+    // Fix async context across builds msg
+    //
+    // String? filePath = await FilesystemPicker.open(
+    //   title: 'Select a folder',
+    //   rootDirectory: rootDirectory,
+    //   fsType: FilesystemType.folder,
+    //   pickText: 'Select',
+    //   folderIconColor: Colors.teal,
+    //   context: context,
+    // );
+    //
+    // if (filePath != null) {
+    //   // Do something with the selected file path
+    //   debugPrint('Selected file: $filePath');
+    //   setState(() {
+    //     selectedFolder = filePath;
+    //   });
+    // }
 
-    if (filePath != null) {
-      // Do something with the selected file path
-      debugPrint('Selected file: $filePath');
-      setState(() {
-        selectedFolder = filePath;
-      });
+    Permission.storage.request();
+
+    // if(await Permission.storage.request().isGranted){
+    //   debugPrint("Has Perms");
+    // }
+
+    Saf saf = Saf(rootDirectory.path);
+    bool? isGranted = await saf.getDirectoryPermission(isDynamic: true);
+
+    if (isGranted != null && isGranted) {
+      fetchFiles(saf);
+      startFileServer(saf, rootDirectory.path);
+      // Perform some file operations
+    } else {
+      debugPrint("No perms");
+      // failed to get the permission
     }
+
+    // if(filePath != null){
+    //   startFileServer(rootDirectory.path);
+    // }
   }
 
   Future<void> getIP() async {

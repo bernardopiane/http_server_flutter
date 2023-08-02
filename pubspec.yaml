@@ -44,6 +44,8 @@ dependencies:
   filesystem_picker: ^3.1.0
   path_provider: ^2.0.15
   qr_flutter: ^4.1.0
+  saf: ^1.0.3+4
+  permission_handler: ^10.4.3
 
 dev_dependencies:
   flutter_test:

@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:http_server/functions.dart';
 
 class StartServerButton extends StatefulWidget {
   final String dir;
@@ -23,7 +22,7 @@ class _StartServerButtonState extends State<StartServerButton> {
     return ElevatedButton(
         onPressed: () {
           if(widget.dir != ""){
-            startFileServer(widget.dir);
+            // startFileServer(widget.dir);
             setState(() {
               isRunning = !isRunning;
             });

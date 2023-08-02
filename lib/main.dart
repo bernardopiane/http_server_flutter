@@ -10,7 +10,6 @@ import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:http_server/pages/home_page.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-import 'functions.dart';
 
 Future<void> main() async {
   // WidgetsFlutterBinding.ensureInitialized();
@@ -99,7 +98,7 @@ void onStart(ServiceInstance service) async {
   // Only available for flutter 3.0.0 and later
   DartPluginRegistrant.ensureInitialized();
 
-  startFileServer("/");
+  // startFileServer("/");
 
   // For flutter prior to version 3.0.0
   // We have to register the plugin manually
