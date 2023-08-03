@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 import 'package:http_server/functions.dart';
 import 'package:network_info_plus/network_info_plus.dart';
 import 'package:path_provider/path_provider.dart';
@@ -18,6 +19,7 @@ class _HomePageState extends State<HomePage> {
   String selectedFolder = "";
   final info = NetworkInfo();
   String? ipAddr;
+  bool showQr = false;
 
   @override
   void initState() {
@@ -31,34 +33,107 @@ class _HomePageState extends State<HomePage> {
       appBar: AppBar(
         title: const Text("HTTP Server"),
       ),
-      body: Column(
-        children: [
-          Flexible(
-            child: Column(
-              children: [
-                Text("IP: ${ipAddr.toString()}"),
-                Text("Selected Folder: $selectedFolder"),
-                ElevatedButton(
-                  onPressed: () {
-                    openFilePicker(context);
-                  },
-                  child: const Text('Select Folder'),
-                ),
-              ],
-            ),
-          ),
-          if (ipAddr != null && ipAddr != "")
-            Center(
-              child: SizedBox(
-                height: 200,
-                width: 200,
-                child: QrImageView(
-                  data: "http://$ipAddr:8080",
-                  version: QrVersions.auto,
+      body: SafeArea(
+        minimum: const EdgeInsets.all(8.0),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            Expanded(
+              child: Center(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    Text("IP: ${ipAddr.toString()}"),
+                    Text("Selected Folder: $selectedFolder"),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 16.0),
+                      child: AnimatedSwitcher(
+                        duration: const Duration(milliseconds: 125),
+                        transitionBuilder:
+                            (Widget child, Animation<double> animation) {
+                          return FadeTransition(
+                              opacity: animation, child: child);
+                        },
+                        child: showQr
+                            ? KeyedSubtree(
+                                key: UniqueKey(),
+                                child: ElevatedButton(
+                                  style: ElevatedButton.styleFrom(
+                                      backgroundColor: Colors.green),
+                                  onPressed: () {
+                                    openFilePicker(context);
+                                  },
+                                  child: const Text('Change Folder'),
+                                ),
+                              )
+                            : KeyedSubtree(
+                                key: UniqueKey(),
+                                child: ElevatedButton(
+                                  onPressed: () {
+                                    openFilePicker(context);
+                                  },
+                                  child: const Text('Start Server'),
+                                ),
+                              ),
+                      ),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 16.0),
+                      child: AnimatedSwitcher(
+                        duration: const Duration(milliseconds: 125),
+                        transitionBuilder:
+                            (Widget child, Animation<double> animation) {
+                          return FadeTransition(
+                              opacity: animation, child: child);
+                        },
+                        child: showQr
+                            ? KeyedSubtree(
+                                key: UniqueKey(),
+                                child: ElevatedButton(
+                                  style: ElevatedButton.styleFrom(
+                                      backgroundColor: Colors.red),
+                                  onPressed: showQr
+                                      ? () {
+                                          if (showQr) {
+                                            stopFileServer();
+                                            setState(() {
+                                              showQr = false;
+                                            });
+                                          }
+                                        }
+                                      : null,
+                                  child: const Text('Stop Server'),
+                                ),
+                              )
+                            : KeyedSubtree(
+                                key: UniqueKey(),
+                                child: ElevatedButton(
+                                  style: ElevatedButton.styleFrom(
+                                      backgroundColor: Colors.red),
+                                  onPressed: null,
+                                  child: const Text('Stop Server'),
+                                ),
+                              ),
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ),
-        ],
+            if (showQr)
+              Center(
+                child: SizedBox(
+                  height: 200,
+                  width: 200,
+                  child: QrImageView(
+                    data: "http://$ipAddr:8080",
+                    version: QrVersions.auto,
+                  ),
+                ),
+              ),
+          ],
+        ),
       ),
     );
   }
@@ -67,10 +142,19 @@ class _HomePageState extends State<HomePage> {
     Directory? rootDirectory;
 
     if (Platform.isAndroid) {
-      // rootDirectory = await getExternalStorageDirectory();
-      rootDirectory = Directory("/storage/emulated/0");
+      // Use the platform plugin to get external storage directory
+      try {
+        rootDirectory = await getExternalStorageDirectory();
+      } catch (e) {
+        debugPrint('Error accessing external storage directory: $e');
+      }
     } else if (Platform.isIOS) {
-      rootDirectory = await getApplicationDocumentsDirectory();
+      // Use the platform plugin to get application documents directory
+      try {
+        rootDirectory = await getApplicationDocumentsDirectory();
+      } catch (e) {
+        debugPrint('Error accessing application documents directory: $e');
+      }
     }
 
     if (rootDirectory == null) {
@@ -78,54 +162,61 @@ class _HomePageState extends State<HomePage> {
       return;
     }
 
-    // if(!mounted){
-    //   return;
-    // }
-    // Fix async context across builds msg
-    //
-    // String? filePath = await FilesystemPicker.open(
-    //   title: 'Select a folder',
-    //   rootDirectory: rootDirectory,
-    //   fsType: FilesystemType.folder,
-    //   pickText: 'Select',
-    //   folderIconColor: Colors.teal,
-    //   context: context,
-    // );
-    //
-    // if (filePath != null) {
-    //   // Do something with the selected file path
-    //   debugPrint('Selected file: $filePath');
-    //   setState(() {
-    //     selectedFolder = filePath;
-    //   });
-    // }
-
-    Permission.storage.request();
-
-    // if(await Permission.storage.request().isGranted){
-    //   debugPrint("Has Perms");
-    // }
+    PermissionStatus status = await Permission.storage.request();
+    if (!status.isGranted) {
+      debugPrint('Permission to access storage not granted.');
+      Fluttertoast.showToast(
+        msg: "Permission to access storage not granted.",
+        toastLength: Toast.LENGTH_SHORT,
+        gravity: ToastGravity.BOTTOM,
+        timeInSecForIosWeb: 1,
+        backgroundColor: Colors.redAccent,
+        textColor: Colors.white,
+        fontSize: 16.0,
+      );
+      return;
+    }
 
     Saf saf = Saf(rootDirectory.path);
     bool? isGranted = await saf.getDirectoryPermission(isDynamic: true);
 
     if (isGranted != null && isGranted) {
+      // Fetch the files from the SAF storage
       fetchFiles(saf);
-      startFileServer(saf, rootDirectory.path);
-      // Perform some file operations
-    } else {
-      debugPrint("No perms");
-      // failed to get the permission
-    }
 
-    // if(filePath != null){
-    //   startFileServer(rootDirectory.path);
-    // }
+      // Start the file server
+      startFileServer(saf, rootDirectory.path);
+
+      // Get the list of file paths
+      List<String>? paths = await saf.getFilesPath();
+
+      if (paths != null && paths.isNotEmpty) {
+        setState(() {
+          showQr = true;
+          selectedFolder = removeFileName(paths.elementAt(0));
+        });
+      } else {
+        setState(() {
+          showQr = false;
+          selectedFolder = "No folder selected";
+        });
+      }
+    } else {
+      debugPrint("Permission to access the storage was denied.");
+      Fluttertoast.showToast(
+        msg: "Permission to access the storage was denied.",
+        toastLength: Toast.LENGTH_SHORT,
+        gravity: ToastGravity.BOTTOM,
+        timeInSecForIosWeb: 1,
+        backgroundColor: Colors.redAccent,
+        textColor: Colors.white,
+        fontSize: 16.0,
+      );
+    }
   }
 
   Future<void> getIP() async {
     String? ip = await info.getWifiIP();
-    debugPrint("IP: $ip");
     setState(() {
       ipAddr = ip;
     });

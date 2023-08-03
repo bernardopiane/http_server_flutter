@@ -46,6 +46,7 @@ dependencies:
   qr_flutter: ^4.1.0
   saf: ^1.0.3+4
   permission_handler: ^10.4.3
+  fluttertoast: ^8.2.2
 
 dev_dependencies:
   flutter_test:
