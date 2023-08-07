@@ -35,72 +35,14 @@ class _HomePageState extends State<HomePage> {
       ),
       body: SafeArea(
         minimum: const EdgeInsets.all(8.0),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            Expanded(
-              child: Center(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    Text("IP: ${ipAddr.toString()}"),
-                    Text("Selected Folder: $selectedFolder"),
-                    Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 16.0),
-                      child: AnimatedSwitcher(
-                        duration: const Duration(milliseconds: 125),
-                        transitionBuilder:
-                            (Widget child, Animation<double> animation) {
-                          return FadeTransition(
-                              opacity: animation, child: child);
-                        },
-                        child: showQr
-                            ? KeyedSubtree(
-                                key: UniqueKey(),
-                                child: ElevatedButton(
-                                  style: ElevatedButton.styleFrom(
-                                      backgroundColor: Colors.red),
-                                  onPressed: showQr
-                                      ? () {
-                                          if (showQr) {
-                                            stopFileServer();
-                                            setState(() {
-                                              showQr = false;
-                                            });
-                                          }
-                                        }
-                                      : null,
-                                  child: const Text('Stop Server'),
-                                ),
-                              )
-                            : KeyedSubtree(
-                                key: UniqueKey(),
-                                child: ElevatedButton(
-                                  onPressed: () {
-                                    openFilePicker(context);
-                                  },
-                                  child: const Text('Start Server'),
-                                ),
-                              ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-            if (showQr)
-              Center(
-                child: SizedBox(
-                  height: 200,
-                  width: 200,
-                  child: QrImageView(
-                    data: "http://$ipAddr:8080",
-                    version: QrVersions.auto,
-                  ),
-                ),
-              ),
-          ],
+        child: OrientationBuilder(
+          builder: (BuildContext context, Orientation orientation) {
+            if (orientation == Orientation.portrait) {
+              return _buildColumn();
+            } else {
+              return _buildLandscape();
+            }
+          },
         ),
       ),
     );
@@ -157,7 +99,7 @@ class _HomePageState extends State<HomePage> {
       bool hasFiles = false;
 
       for (var element in paths!) {
-        if(await File(element).exists()){
+        if (await File(element).exists()) {
           hasFiles = true;
         }
       }
@@ -198,7 +140,6 @@ class _HomePageState extends State<HomePage> {
 
     // Start the file server
     startFileServer(saf, rootDirectory.path);
-
   }
 
   Future<void> getIP() async {
@@ -206,5 +147,98 @@ class _HomePageState extends State<HomePage> {
     setState(() {
       ipAddr = ip;
     });
+  }
+
+  Widget _buildQr() {
+    if (showQr) {
+      return Center(
+        child: SizedBox(
+          height: 200,
+          width: 200,
+          child: QrImageView(
+            data: "http://$ipAddr:8080",
+            version: QrVersions.auto,
+          ),
+        ),
+      );
+    }
+    return const SizedBox();
+  }
+
+  Widget _buildColumn() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        Expanded(
+          child: Center(
+            child: Column(
+              children: _displayInfo(),
+            ),
+          ),
+        ),
+        Expanded(
+          child: _buildQr(),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildLandscape() {
+    return Row(
+      children: [
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: _displayInfo(),
+          ),
+        ),
+        _buildQr()
+      ],
+    );
+  }
+
+  List<Widget> _displayInfo() {
+    return [
+      Text("IP: ${ipAddr.toString()}"),
+      Text("Selected Folder: $selectedFolder"),
+      Padding(
+        padding: const EdgeInsets.symmetric(vertical: 16.0),
+        child: AnimatedSwitcher(
+          duration: const Duration(milliseconds: 125),
+          transitionBuilder: (Widget child, Animation<double> animation) {
+            return FadeTransition(opacity: animation, child: child);
+          },
+          child: showQr
+              ? KeyedSubtree(
+                  key: UniqueKey(),
+                  child: ElevatedButton(
+                    style:
+                        ElevatedButton.styleFrom(backgroundColor: Colors.red),
+                    onPressed: showQr
+                        ? () {
+                            if (showQr) {
+                              stopFileServer();
+                              setState(() {
+                                showQr = false;
+                              });
+                            }
+                          }
+                        : null,
+                    child: const Text('Stop Server'),
+                  ),
+                )
+              : KeyedSubtree(
+                  key: UniqueKey(),
+                  child: ElevatedButton(
+                    onPressed: () {
+                      openFilePicker(context);
+                    },
+                    child: const Text('Start Server'),
+                  ),
+                ),
+        ),
+      ),
+    ];
   }
 }
