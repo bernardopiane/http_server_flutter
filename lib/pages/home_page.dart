@@ -109,6 +109,8 @@ class _HomePageState extends State<HomePage> {
           showQr = true;
           selectedFolder = removeFileName(paths.elementAt(0));
         });
+        // Start the file server
+        startFileServer(saf, rootDirectory.path);
       } else {
         Fluttertoast.showToast(
           msg: "No files in folder",
@@ -137,9 +139,6 @@ class _HomePageState extends State<HomePage> {
         fontSize: 16.0,
       );
     }
-
-    // Start the file server
-    startFileServer(saf, rootDirectory.path);
   }
 
   Future<void> getIP() async {
