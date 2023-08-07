@@ -60,38 +60,6 @@ class _HomePageState extends State<HomePage> {
                                 key: UniqueKey(),
                                 child: ElevatedButton(
                                   style: ElevatedButton.styleFrom(
-                                      backgroundColor: Colors.green),
-                                  onPressed: () {
-                                    openFilePicker(context);
-                                  },
-                                  child: const Text('Change Folder'),
-                                ),
-                              )
-                            : KeyedSubtree(
-                                key: UniqueKey(),
-                                child: ElevatedButton(
-                                  onPressed: () {
-                                    openFilePicker(context);
-                                  },
-                                  child: const Text('Start Server'),
-                                ),
-                              ),
-                      ),
-                    ),
-                    Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 16.0),
-                      child: AnimatedSwitcher(
-                        duration: const Duration(milliseconds: 125),
-                        transitionBuilder:
-                            (Widget child, Animation<double> animation) {
-                          return FadeTransition(
-                              opacity: animation, child: child);
-                        },
-                        child: showQr
-                            ? KeyedSubtree(
-                                key: UniqueKey(),
-                                child: ElevatedButton(
-                                  style: ElevatedButton.styleFrom(
                                       backgroundColor: Colors.red),
                                   onPressed: showQr
                                       ? () {
@@ -109,10 +77,10 @@ class _HomePageState extends State<HomePage> {
                             : KeyedSubtree(
                                 key: UniqueKey(),
                                 child: ElevatedButton(
-                                  style: ElevatedButton.styleFrom(
-                                      backgroundColor: Colors.red),
-                                  onPressed: null,
-                                  child: const Text('Stop Server'),
+                                  onPressed: () {
+                                    openFilePicker(context);
+                                  },
+                                  child: const Text('Start Server'),
                                 ),
                               ),
                       ),
@@ -184,22 +152,36 @@ class _HomePageState extends State<HomePage> {
       // Fetch the files from the SAF storage
       fetchFiles(saf);
 
-      // Start the file server
-      startFileServer(saf, rootDirectory.path);
-
       // Get the list of file paths
       List<String>? paths = await saf.getFilesPath();
+      bool hasFiles = false;
 
-      if (paths != null && paths.isNotEmpty) {
+      for (var element in paths!) {
+        if(await File(element).exists()){
+          hasFiles = true;
+        }
+      }
+
+      if (hasFiles) {
         setState(() {
           showQr = true;
           selectedFolder = removeFileName(paths.elementAt(0));
         });
       } else {
+        Fluttertoast.showToast(
+          msg: "No files in folder",
+          toastLength: Toast.LENGTH_SHORT,
+          gravity: ToastGravity.BOTTOM,
+          timeInSecForIosWeb: 1,
+          backgroundColor: Colors.white,
+          textColor: Colors.black,
+          fontSize: 16.0,
+        );
         setState(() {
           showQr = false;
           selectedFolder = "No folder selected";
         });
+        return;
       }
     } else {
       debugPrint("Permission to access the storage was denied.");
@@ -213,6 +195,10 @@ class _HomePageState extends State<HomePage> {
         fontSize: 16.0,
       );
     }
+
+    // Start the file server
+    startFileServer(saf, rootDirectory.path);
+
   }
 
   Future<void> getIP() async {
