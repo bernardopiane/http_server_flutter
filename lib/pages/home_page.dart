@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:http_server/functions.dart';
@@ -7,7 +8,6 @@ import 'package:network_info_plus/network_info_plus.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:qr_flutter/qr_flutter.dart';
-import 'package:saf/saf.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({Key? key}) : super(key: key);
@@ -65,6 +65,12 @@ class _HomePageState extends State<HomePage> {
       } catch (e) {
         debugPrint('Error accessing application documents directory: $e');
       }
+    } else if (Platform.isWindows) {
+      try {
+        rootDirectory = await getDownloadsDirectory();
+      } catch (e) {
+        debugPrint('Error accessing application documents directory: $e');
+      }
     }
 
     if (rootDirectory == null) {
@@ -87,31 +93,45 @@ class _HomePageState extends State<HomePage> {
       return;
     }
 
-    Saf saf = Saf(rootDirectory.path);
-    bool? isGranted = await saf.getDirectoryPermission(isDynamic: true);
+    final result = await FilePicker.platform.getDirectoryPath();
+    setState(() {
+      selectedFolder = result!;
+    });
 
-    if (isGranted != null && isGranted) {
-      // Fetch the files from the SAF storage
-      fetchFiles(saf);
+    Directory dir = Directory(selectedFolder);
+    final files = dir.listSync();
+    bool hasFiles = false;
 
-      // Get the list of file paths
-      List<String>? paths = await saf.getFilesPath();
-      bool hasFiles = false;
-
-      for (var element in paths!) {
-        if (await File(element).exists()) {
-          hasFiles = true;
-        }
+    for (var file in files) {
+      if (file is File) {
+        hasFiles = true;
       }
+    }
 
-      if (hasFiles) {
-        setState(() {
-          showQr = true;
-          selectedFolder = removeFileName(paths.elementAt(0));
-        });
-        // Start the file server
-        startFileServer(saf, rootDirectory.path);
-      } else {
+    // Saf saf = Saf(rootDirectory.path);
+    // bool? isGranted = await saf.getDirectoryPermission(isDynamic: true);
+    //
+    // if (isGranted != null && isGranted) {
+    //   // Fetch the files from the SAF storage
+    //   fetchFiles(saf);
+    //
+    //   // Get the list of file paths
+    //   List<String>? paths = await saf.getFilesPath();
+    //
+    //   for (var element in paths!) {
+    //     if (await File(element).exists()) {
+    //       hasFiles = true;
+    //     }
+    //   }
+
+    if (hasFiles) {
+      setState(() {
+        showQr = true;
+      });
+      // Start the file server
+      startFileServer(selectedFolder);
+    } else {
+      if (!Platform.isWindows) {
         Fluttertoast.showToast(
           msg: "No files in folder",
           toastLength: Toast.LENGTH_SHORT,
@@ -121,28 +141,44 @@ class _HomePageState extends State<HomePage> {
           textColor: Colors.black,
           fontSize: 16.0,
         );
-        setState(() {
-          showQr = false;
-          selectedFolder = "No folder selected";
-        });
-        return;
       }
-    } else {
-      debugPrint("Permission to access the storage was denied.");
-      Fluttertoast.showToast(
-        msg: "Permission to access the storage was denied.",
-        toastLength: Toast.LENGTH_SHORT,
-        gravity: ToastGravity.BOTTOM,
-        timeInSecForIosWeb: 1,
-        backgroundColor: Colors.redAccent,
-        textColor: Colors.white,
-        fontSize: 16.0,
-      );
+      setState(() {
+        showQr = false;
+        selectedFolder = "No folder selected";
+      });
+      return;
     }
+    // } else {
+    //   debugPrint("Permission to access the storage was denied.");
+    //   Fluttertoast.showToast(
+    //     msg: "Permission to access the storage was denied.",
+    //     toastLength: Toast.LENGTH_SHORT,
+    //     gravity: ToastGravity.BOTTOM,
+    //     timeInSecForIosWeb: 1,
+    //     backgroundColor: Colors.redAccent,
+    //     textColor: Colors.white,
+    //     fontSize: 16.0,
+    //   );
+    // }
   }
 
   Future<void> getIP() async {
-    String? ip = await info.getWifiIP();
+    String? ip;
+
+    if (Platform.isWindows) {
+      final interfaces = await NetworkInterface.list();
+      for (var interface in interfaces) {
+        for (var addr in interface.addresses) {
+          if (addr.type == InternetAddressType.IPv4) {
+            ip = addr.address;
+          }
+        }
+      }
+    } else {
+      // Mobile
+      ip = await info.getWifiIP();
+    }
+
     setState(() {
       ipAddr = ip;
     });

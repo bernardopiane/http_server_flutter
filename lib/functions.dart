@@ -5,30 +5,10 @@ import 'package:fluttertoast/fluttertoast.dart';
 import 'package:http_server/globals.dart';
 import 'package:network_info_plus/network_info_plus.dart';
 import 'package:permission_handler/permission_handler.dart';
-import 'package:saf/saf.dart';
 
 Future<void> stopFileServer() async {
   await server!.close(force: true);
-  Fluttertoast.showToast(
-    msg: "Server has been stopped",
-    toastLength: Toast.LENGTH_SHORT,
-    gravity: ToastGravity.BOTTOM,
-    timeInSecForIosWeb: 1,
-    backgroundColor: Colors.white,
-    textColor: Colors.black,
-    fontSize: 16.0,
-  );
-}
-
-Future<void> startFileServer(Saf saf, String rootDirectory) async {
-  final info = NetworkInfo();
-  final ipAddress = await info.getWifiIP();
-
-  if (server != null) {
-    // Server is already running, stop it first
-    await server!.close(force: true);
-    debugPrint('Server stopped.');
-    server = null;
+  if (!Platform.isWindows) {
     Fluttertoast.showToast(
       msg: "Server has been stopped",
       toastLength: Toast.LENGTH_SHORT,
@@ -39,59 +19,90 @@ Future<void> startFileServer(Saf saf, String rootDirectory) async {
       fontSize: 16.0,
     );
   }
+}
+
+Future<void> startFileServer(String selectedFolder) async {
+  final info = NetworkInfo();
+  late final String? ipAddress;
+
+  if (Platform.isWindows) {
+    final interfaces = await NetworkInterface.list();
+    for (var interface in interfaces) {
+      for (var addr in interface.addresses) {
+        if (addr.type == InternetAddressType.IPv4) {
+          ipAddress = addr.address;
+        }
+      }
+    }
+  } else {
+    ipAddress = await info.getWifiIP();
+  }
+
+
+  if (server != null) {
+    // Server is already running, stop it first
+    await server!.close(force: true);
+    debugPrint('Server stopped.');
+    server = null;
+    if (!Platform.isWindows) {
+      Fluttertoast.showToast(
+        msg: "Server has been stopped",
+        toastLength: Toast.LENGTH_SHORT,
+        gravity: ToastGravity.BOTTOM,
+        timeInSecForIosWeb: 1,
+        backgroundColor: Colors.white,
+        textColor: Colors.black,
+        fontSize: 16.0,
+      );
+    }
+  }
 
   try {
     server = await HttpServer.bind(ipAddress, 8080);
     debugPrint('Server started on port 8080');
 
     // Show a success message when the server is started successfully
-    Fluttertoast.showToast(
-      msg: "Server started on port 8080",
-      toastLength: Toast.LENGTH_SHORT,
-      gravity: ToastGravity.BOTTOM,
-      timeInSecForIosWeb: 1,
-      backgroundColor: Colors.green,
-      textColor: Colors.white,
-      fontSize: 16.0,
-    );
+    if (!Platform.isWindows) {
+      Fluttertoast.showToast(
+        msg: "Server started on port 8080",
+        toastLength: Toast.LENGTH_SHORT,
+        gravity: ToastGravity.BOTTOM,
+        timeInSecForIosWeb: 1,
+        backgroundColor: Colors.green,
+        textColor: Colors.white,
+        fontSize: 16.0,
+      );
+    }
 
     await for (var request in server!) {
-      handleRequest(request, saf, rootDirectory);
+      handleRequest(request, selectedFolder);
     }
   } catch (e) {
     // Handle the case when the server fails to bind to the IP address
-    Fluttertoast.showToast(
-      msg: "Error starting the server: $e",
-      toastLength: Toast.LENGTH_SHORT,
-      gravity: ToastGravity.BOTTOM,
-      timeInSecForIosWeb: 1,
-      backgroundColor: Colors.redAccent,
-      textColor: Colors.white,
-      fontSize: 16.0,
-    );
+    if (!Platform.isWindows) {
+      Fluttertoast.showToast(
+        msg: "Error starting the server: $e",
+        toastLength: Toast.LENGTH_SHORT,
+        gravity: ToastGravity.BOTTOM,
+        timeInSecForIosWeb: 1,
+        backgroundColor: Colors.redAccent,
+        textColor: Colors.white,
+        fontSize: 16.0,
+      );
+    }
     debugPrint('Error starting the server: $e');
   }
 }
 
-Future<String> fetchFiles(Saf saf) async {
+Future<String> fetchFiles(String selectedFolder) async {
   try {
-    List<String>? paths = await saf.getFilesPath();
+    Directory dir = Directory(selectedFolder);
+    final files = dir.listSync();
 
-    if (paths == null || paths.isEmpty) {
-      debugPrint("No files found.");
-      return ''; // Return an empty string if no files are found.
-    }
-
-    for (var path in paths) {
-      debugPrint("Files Paths: $path");
-    }
-
-    final links = paths.map((e) {
-      final fileName = e.split(Platform.pathSeparator).last;
-      return '<li><a href="/download/${Uri.encodeComponent(fileName)}">$fileName</a></li>';
+    final links = files.map((e) {
+      final fileName = e.path.toString().split(Platform.pathSeparator).last;
+      return '<li><a href="/download/$fileName">$fileName</a></li>';
     }).join();
-
-    debugPrint(links);
 
     return links;
   } catch (e) {
@@ -100,12 +111,12 @@ Future<String> fetchFiles(Saf saf) async {
   }
 }
 
-void handleRequest(HttpRequest request, Saf saf, String rootDirectory) async {
+void handleRequest(HttpRequest request, String selectedFolder) async {
   final requestedPath = request.uri.path;
   // TODO add and display list of recently connected IPs
 
   if (requestedPath == '/') {
-    final fileLinks = await fetchFiles(saf);
+    final files = await fetchFiles(selectedFolder);
 
     final html = '''
         <!DOCTYPE html>
@@ -116,7 +127,7 @@ void handleRequest(HttpRequest request, Saf saf, String rootDirectory) async {
           <body>
             <h1>Files in the Selected Folder:</h1>
             <ul>
-              $fileLinks
+              $files
             </ul>
           </body>
         </html>
@@ -131,13 +142,15 @@ void handleRequest(HttpRequest request, Saf saf, String rootDirectory) async {
     // Handle file download
     final fileName = Uri.decodeComponent(requestedPath.split('/').last);
 
-    List<String>? listFolderPath = await saf.getFilesPath();
-    String folderPath = removeFileName(listFolderPath!.elementAt(0));
+    // List<String>? listFolderPath = await saf.getFilesPath();
+    // String folderPath = removeFileName(listFolderPath!.elementAt(0));
 
-    final filePath = folderPath + fileName;
+    final filePath = "$selectedFolder\\$fileName";
     final file = File(filePath);
+    debugPrint("File: ${file.toString()}");
 
     if (file.existsSync()) {
+      debugPrint("Asking permission");
       final status = await Permission.manageExternalStorage.status;
       if (!status.isGranted) {
         await Permission.manageExternalStorage.request();
