@@ -38,7 +38,6 @@ Future<void> startFileServer(String selectedFolder) async {
     ipAddress = await info.getWifiIP();
   }
 
-
   if (server != null) {
     // Server is already running, stop it first
     await server!.close(force: true);
@@ -101,7 +100,13 @@ Future<String> fetchFiles(String selectedFolder) async {
 
     final links = files.map((e) {
       final fileName = e.path.toString().split(Platform.pathSeparator).last;
-      return '<li><a href="/download/$fileName">$fileName</a></li>';
+
+      if(isDirectory(e.path)){
+        // TODO handle if folder is clicked
+        return "";
+      }
+
+      return '<div class="grid-item"><a href="/download/$fileName">$fileName</a></div>';
     }).join();
 
     return links;
@@ -124,11 +129,27 @@ void handleRequest(HttpRequest request, String selectedFolder) async {
           <head>
             <title>File List</title>
           </head>
+          <style>
+            .grid-container {
+              display: grid;
+              grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+              gap: 20px;
+              padding: 20px;
+            }
+          
+            .grid-item {
+              background-color: #ccc;
+              padding: 20px;
+              text-align: center;
+              border: 1px solid #333;
+            }
+          </style>
           <body>
             <h1>Files in the Selected Folder:</h1>
-            <ul>
+            <div class="grid-container">
               $files
-            </ul>
+              <div class="grid-item">Item 8</div>
+            </div>
           </body>
         </html>
       ''';
@@ -141,11 +162,8 @@ void handleRequest(HttpRequest request, String selectedFolder) async {
   } else if (requestedPath.startsWith('/download/')) {
     // Handle file download
     final fileName = Uri.decodeComponent(requestedPath.split('/').last);
-
-    // List<String>? listFolderPath = await saf.getFilesPath();
-    // String folderPath = removeFileName(listFolderPath!.elementAt(0));
-
     final filePath = "$selectedFolder\\$fileName";
+
     final file = File(filePath);
     debugPrint("File: ${file.toString()}");
 
@@ -178,6 +196,11 @@ void handleRequest(HttpRequest request, String selectedFolder) async {
       ..write('Page not found');
     await request.response.close();
   }
+}
+
+bool isDirectory(String filePath) {
+  var directory = Directory(filePath);
+  return directory.existsSync();
 }
 
 String removeFileName(String input) {
