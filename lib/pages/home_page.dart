@@ -3,11 +3,12 @@ import 'dart:io';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
-import 'package:http_server/functions.dart';
-import 'package:network_info_plus/network_info_plus.dart';
+import 'package:get/get.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:qr_flutter/qr_flutter.dart';
+
+import '../model/http_service.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({Key? key}) : super(key: key);
@@ -17,14 +18,14 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   String selectedFolder = "";
-  final info = NetworkInfo();
-  String? ipAddr;
   bool showQr = false;
+  // Use Get.find to retrieve the HttpService instance
+  final httpService = Get.find<HttpService>();
 
   @override
   void initState() {
     super.initState();
-    getIP();
+    httpService.getIP();
   }
 
   @override
@@ -129,7 +130,7 @@ class _HomePageState extends State<HomePage> {
         showQr = true;
       });
       // Start the file server
-      startFileServer(selectedFolder);
+      httpService.startFileServer(selectedFolder);
     } else {
       if (!Platform.isWindows) {
         Fluttertoast.showToast(
@@ -162,28 +163,6 @@ class _HomePageState extends State<HomePage> {
     // }
   }
 
-  Future<void> getIP() async {
-    String? ip;
-
-    if (Platform.isWindows) {
-      final interfaces = await NetworkInterface.list();
-      for (var interface in interfaces) {
-        for (var addr in interface.addresses) {
-          if (addr.type == InternetAddressType.IPv4) {
-            ip = addr.address;
-          }
-        }
-      }
-    } else {
-      // Mobile
-      ip = await info.getWifiIP();
-    }
-
-    setState(() {
-      ipAddr = ip;
-    });
-  }
-
   Widget _buildQr() {
     if (showQr) {
       return Center(
@@ -191,7 +170,7 @@ class _HomePageState extends State<HomePage> {
           height: 200,
           width: 200,
           child: QrImageView(
-            data: "http://$ipAddr:8080",
+            data: "http://${httpService.ip.value}:8080",
             version: QrVersions.auto,
           ),
         ),
@@ -235,7 +214,12 @@ class _HomePageState extends State<HomePage> {
 
   List<Widget> _displayInfo() {
     return [
-      Text("IP: ${ipAddr.toString()}"),
+      Obx(
+        () {
+          final ipAddress = httpService.ip.value;
+          return Text("IP: $ipAddress");
+        },
+      ),
       Text("Selected Folder: $selectedFolder"),
       Padding(
         padding: const EdgeInsets.symmetric(vertical: 16.0),
@@ -253,7 +237,7 @@ class _HomePageState extends State<HomePage> {
                     onPressed: showQr
                         ? () {
                             if (showQr) {
-                              stopFileServer();
+                              httpService.stopServer();
                               setState(() {
                                 showQr = false;
                               });

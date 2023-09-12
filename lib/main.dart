@@ -1,13 +1,17 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import 'package:http_server/pages/home_page.dart';
+
+import 'model/http_service.dart';
 
 Future<void> main() async {
   // WidgetsFlutterBinding.ensureInitialized();
   // await initializeService();
   // runApp(const MyApp());
-  runApp(const MaterialApp(home: HomePage()));
+  final httpService = Get.put(HttpService());
+  runApp(const GetMaterialApp(home: HomePage()));
 }
 
 // class MyApp extends StatefulWidget {
