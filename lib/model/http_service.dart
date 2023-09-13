@@ -14,7 +14,6 @@ class HttpService extends GetxController {
   HttpServer? get server => _server.value;
 
   Future<void> startFileServer(String selectedFolder) async {
-    final info = NetworkInfo();
     late final String? ipAddress;
 
     if (Platform.isWindows) {
@@ -27,25 +26,29 @@ class HttpService extends GetxController {
         }
       }
     } else {
+      final info = NetworkInfo();
       ipAddress = await info.getWifiIP();
     }
 
-    if (server != null) {
+    if (_server.value != null) {
       // Server is already running, stop it first
-      await server!.close(force: true);
+      await _server.value!.close(force: true);
       _server.value = null;
     }
 
     try {
       _server.value = await HttpServer.bind(ipAddress, 8080);
 
-      await for (var request in server!) {
+      Get.snackbar("Message", "Server has been started",
+          snackPosition: SnackPosition.BOTTOM);
+
+      await for (var request in _server.value!) {
         handleRequest(request, selectedFolder);
       }
     } catch (e) {
       // Handle the case when the server fails to bind to the IP address
       if (!Platform.isWindows) {
-
+        // Handle the error on non-Windows platforms here
       }
     }
   }
@@ -55,21 +58,38 @@ class HttpService extends GetxController {
       Directory dir = Directory(selectedFolder);
       final files = dir.listSync();
 
-      final links = files.map((e) {
-        final fileName = e.path.toString().split(Platform.pathSeparator).last;
+      final links = await Future.wait(files.map((e) async {
+        final fileName = e.path.split(Platform.pathSeparator).last;
 
-        if(isDirectory(e.path)){
-          // TODO handle if folder is clicked
-          return "";
+        if (FileSystemEntity.isFileSync(e.path)) {
+          final file = File(e.path);
+          final fileLength = await file.length();
+
+          final fileSize = _formatFileSize(fileLength);
+
+          return '<div class="grid-item"><a href="/download/$fileName">$fileName <br> $fileSize</a></div>';
         }
 
-        return '<div class="grid-item"><a href="/download/$fileName">$fileName</a></div>';
-      }).join();
+        return '';
+      }));
 
-      return links;
+      return links.join();
     } catch (e) {
       return ''; // Return an empty string in case of an error.
     }
+  }
+
+  String _formatFileSize(int bytes) {
+    const units = ['B', 'KB', 'MB', 'GB', 'TB'];
+    int i = 0;
+    double fileSize = bytes.toDouble();
+
+    while (fileSize >= 1024 && i < units.length - 1) {
+      fileSize /= 1024;
+      i++;
+    }
+
+    return '${fileSize.toStringAsFixed(2)} ${units[i]}';
   }
 
   void handleRequest(HttpRequest request, String selectedFolder) async {
@@ -98,6 +118,7 @@ class HttpService extends GetxController {
               padding: 20px;
               text-align: center;
               border: 1px solid #333;
+              word-wrap: anywhere;
             }
           </style>
           <body>
@@ -134,7 +155,8 @@ class HttpService extends GetxController {
         request.response
           ..statusCode = HttpStatus.ok
           ..headers.contentType = ContentType('application', 'octet-stream')
-          ..headers.set('Content-Disposition', 'attachment; filename="$fileName"')
+          ..headers
+              .set('Content-Disposition', 'attachment; filename="$fileName"')
           ..headers.set('Content-Length', fileSize.toString())
           ..add(fileBytes);
       } else {
@@ -157,6 +179,8 @@ class HttpService extends GetxController {
     if (httpServer != null) {
       await httpServer.close(force: true);
       _server.value = null;
+      Get.snackbar("Message", "Server has been stopped",
+          snackPosition: SnackPosition.BOTTOM);
     }
   }
 
