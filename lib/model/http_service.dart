@@ -64,18 +64,18 @@ class HttpService extends GetxController {
 
         if (FileSystemEntity.isFileSync(e.path)) {
           final file = File(e.path);
-          final fileLength = await file.length();
+          final fileLength = file.lengthSync() / 1024.0;
 
-          final fileSize = _formatFileSize(fileLength);
+          final fileSize = fileLength.toStringAsFixed(2);
           final fileType = _getFileType(fileName);
           final modifiedDate = await _getFormattedModifiedDate(file);
 
           return '''
          <div class="table-row">
-            <div class="table-cell"><a href="/download/$fileName">$fileName</a></div>
-            <div class="table-cell">$modifiedDate</div>
-            <div class="table-cell">$fileType</div>
-            <div class="table-cell">$fileSize</div>
+            <div class="table-cell" data-key="fileName"><a href="/download/$fileName">$fileName</a></div>
+            <div class="table-cell" data-key="modifiedDate">$modifiedDate</div>
+            <div class="table-cell" data-key="fileType">$fileType</div>
+            <div class="table-cell" data-key="fileSize">$fileSize KB</div>
         </div>
           ''';
         }
@@ -87,19 +87,6 @@ class HttpService extends GetxController {
     } catch (e) {
       return ''; // Return an empty string in case of an error.
     }
-  }
-
-  String _formatFileSize(int bytes) {
-    const units = ['B', 'KB', 'MB', 'GB', 'TB'];
-    int i = 0;
-    double fileSize = bytes.toDouble();
-
-    while (fileSize >= 1024 && i < units.length - 1) {
-      fileSize /= 1024;
-      i++;
-    }
-
-    return '${fileSize.toStringAsFixed(2)} ${units[i]}';
   }
 
   String _getFileType(String fileName) {
@@ -120,38 +107,6 @@ class HttpService extends GetxController {
     if (requestedPath == '/') {
       final files = await fetchFiles(selectedFolder);
 
-      // final html = '''
-      //   <!DOCTYPE html>
-      //   <html>
-      //     <head>
-      //       <title>File List</title>
-      //     </head>
-      //     <style>
-      //       .grid-container {
-      //         display: grid;
-      //         grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-      //         gap: 20px;
-      //         padding: 20px;
-      //       }
-      //
-      //       .grid-item {
-      //         background-color: #ccc;
-      //         padding: 20px;
-      //         text-align: center;
-      //         border: 1px solid #333;
-      //         word-wrap: anywhere;
-      //       }
-      //     </style>
-      //     <body>
-      //       <h1>Files in the Selected Folder:</h1>
-      //       <div class="grid-container">
-      //         $files
-      //         <div class="grid-item">Item 8</div>
-      //       </div>
-      //     </body>
-      //   </html>
-      // ''';
-
       final html = '''
       <!DOCTYPE html>
 <html lang="en">
@@ -164,6 +119,17 @@ class HttpService extends GetxController {
         .table-container {
             display: flex;
             flex-direction: column;
+        }
+        .table-header {
+            cursor: pointer;
+        }
+
+        .table-header.sorted-asc::after {
+            content: ' ↑';
+        }
+
+        .table-header.sorted-desc::after {
+            content: ' ↓';
         }
 
         .table-row {
@@ -203,14 +169,73 @@ class HttpService extends GetxController {
 <body>
     <div class="table-container">
         <div class="table-row">
-            <div class="table-cell">Name</div>
-            <div class="table-cell">Modified date</div>
-            <div class="table-cell">Type</div>
-            <div class="table-cell">Size</div>
+            <div class="table-header table-cell sortable" data-key="fileName">Name</div>
+            <div class="table-header table-cell sortable" data-key="modifiedDate">Modified date</div>
+            <div class="table-header table-cell sortable" data-key="fileType">Type</div>
+            <div class="table-header table-cell sortable" data-key="fileSize">Size</div>
         </div>
         $files
         </table>
     </div>
+     <script>
+        // JavaScript for sorting the table
+        const tableContainer = document.querySelector('.table-container');
+        const sortableHeaders = tableContainer.querySelectorAll('.sortable');
+
+        sortableHeaders.forEach(header => {
+            header.addEventListener('click', () => {
+                const key = header.getAttribute('data-key');
+                const ascending = !header.classList.contains('sorted-asc');
+
+                // Remove sorting indicators from all headers
+                sortableHeaders.forEach(otherHeader => {
+                    otherHeader.classList.remove('sorted-asc', 'sorted-desc');
+                });
+
+                // Sort the table rows based on the selected key and order
+                const rows = Array.from(tableContainer.querySelectorAll('.table-row')).slice(1); // Exclude the header row
+               rows.sort((a, b) => {
+                  let aValue = a.querySelector(`[data-key="\${key}"]`);
+                  let bValue = b.querySelector(`[data-key="\${key}"]`);
+                  
+                  // Check if aValue and bValue are defined, and if not, use empty strings
+                  aValue = aValue ? aValue.textContent : '';
+                  bValue = bValue ? bValue.textContent : '';
+                  
+                  // Check if sorting the last cell (file size)
+                  if (key === 'fileSize') {
+                      // Parse the values as integers for the last cell
+                      const aSize = parseInt(aValue);
+                      const bSize = parseInt(bValue);
+              
+                      if (ascending) {
+                          return aSize - bSize; // Sort as integers in ascending order
+                      } else {
+                          return bSize - aSize; // Sort as integers in descending order
+                      }
+                  } else {
+                      // Sort the other cells as strings
+                      if (ascending) {
+                          return aValue.localeCompare(bValue);
+                      } else {
+                          return bValue.localeCompare(aValue);
+                      }
+                  }
+              });
+
+
+
+                // Apply sorting order class to the header
+                header.classList.toggle('sorted-asc', ascending);
+                header.classList.toggle('sorted-desc', !ascending);
+
+                // Reorder the rows in the table container
+                rows.forEach(row => {
+                    tableContainer.appendChild(row);
+                });
+            });
+        });
+    </script>
 </body>
 </html>
 
