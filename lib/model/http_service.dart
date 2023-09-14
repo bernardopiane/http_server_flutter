@@ -1,4 +1,5 @@
 import 'package:get/get.dart';
+import 'package:intl/intl.dart';
 import 'dart:io';
 
 import 'package:network_info_plus/network_info_plus.dart';
@@ -53,6 +54,8 @@ class HttpService extends GetxController {
     }
   }
 
+  //           return '<tr><td>$fileName</td><td>Data</td><td>Type</td><td>$fileSize</td></tr>';
+
   Future<String> fetchFiles(String selectedFolder) async {
     try {
       Directory dir = Directory(selectedFolder);
@@ -66,8 +69,10 @@ class HttpService extends GetxController {
           final fileLength = await file.length();
 
           final fileSize = _formatFileSize(fileLength);
+          final fileType = _getFileType(fileName);
+          final modifiedDate = await _getFormattedModifiedDate(file);
 
-          return '<div class="grid-item"><a href="/download/$fileName">$fileName <br> $fileSize</a></div>';
+          return '<tr><td>$fileName</td><td>$modifiedDate</td><td>$fileType</td><td>$fileSize</td></tr>';
         }
 
         return '';
@@ -92,6 +97,17 @@ class HttpService extends GetxController {
     return '${fileSize.toStringAsFixed(2)} ${units[i]}';
   }
 
+  String _getFileType(String fileName) {
+    final extension = fileName.split('.').last;
+    return extension.isEmpty ? 'Unknown' : extension.toUpperCase();
+  }
+
+  Future<String> _getFormattedModifiedDate(File file) async {
+    final modifiedDate = await file.lastModified();
+    final dateFormatter = DateFormat('yyyy-MM-dd HH:mm:ss');
+    return dateFormatter.format(modifiedDate);
+  }
+
   void handleRequest(HttpRequest request, String selectedFolder) async {
     final requestedPath = request.uri.path;
     // TODO add and display list of recently connected IPs
@@ -99,36 +115,105 @@ class HttpService extends GetxController {
     if (requestedPath == '/') {
       final files = await fetchFiles(selectedFolder);
 
+      // final html = '''
+      //   <!DOCTYPE html>
+      //   <html>
+      //     <head>
+      //       <title>File List</title>
+      //     </head>
+      //     <style>
+      //       .grid-container {
+      //         display: grid;
+      //         grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      //         gap: 20px;
+      //         padding: 20px;
+      //       }
+      //
+      //       .grid-item {
+      //         background-color: #ccc;
+      //         padding: 20px;
+      //         text-align: center;
+      //         border: 1px solid #333;
+      //         word-wrap: anywhere;
+      //       }
+      //     </style>
+      //     <body>
+      //       <h1>Files in the Selected Folder:</h1>
+      //       <div class="grid-container">
+      //         $files
+      //         <div class="grid-item">Item 8</div>
+      //       </div>
+      //     </body>
+      //   </html>
+      // ''';
+
       final html = '''
-        <!DOCTYPE html>
-        <html>
-          <head>
-            <title>File List</title>
-          </head>
-          <style>
-            .grid-container {
-              display: grid;
-              grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-              gap: 20px;
-              padding: 20px;
-            }
-          
-            .grid-item {
-              background-color: #ccc;
-              padding: 20px;
-              text-align: center;
-              border: 1px solid #333;
-              word-wrap: anywhere;
-            }
-          </style>
-          <body>
-            <h1>Files in the Selected Folder:</h1>
-            <div class="grid-container">
-              $files
-              <div class="grid-item">Item 8</div>
-            </div>
-          </body>
-        </html>
+      <!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>File Share</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f0f0f0;
+        }
+
+        .container {
+            width: 80%;
+            margin: 0 auto;
+            background-color: #fff;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            border-spacing: 0;
+        }
+
+        th, td {
+            padding: 15px;
+            text-align: left;
+        }
+
+        th {
+            background-color: #0078d4;
+            color: #fff;
+            font-weight: bold;
+        }
+
+        tr:nth-child(even) {
+            background-color: #f2f2f2;
+        }
+
+        tr:hover {
+            background-color: #e2e2e2;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <table>
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Date Modified</th>
+                    <th>Type</th>
+                    <th>Size</th>
+                </tr>
+            </thead>
+            <tbody>
+            $files
+            </tbody>
+        </table>
+    </div>
+</body>
+</html>
+
       ''';
 
       request.response
