@@ -72,6 +72,15 @@ class HttpService extends GetxController {
           final fileType = _getFileType(fileName);
           final modifiedDate = await _getFormattedModifiedDate(file);
 
+          return '''
+         <div class="table-row">
+            <div class="table-cell"><a href="/download/$fileName">$fileName</a></div>
+            <div class="table-cell">$modifiedDate</div>
+            <div class="table-cell">$fileType</div>
+            <div class="table-cell">$fileSize</div>
+        </div>
+          ''';
+
           return '<tr><td>$fileName</td><td>$modifiedDate</td><td>$fileType</td><td>$fileSize</td></tr>';
         }
 
@@ -154,61 +163,56 @@ class HttpService extends GetxController {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>File Share</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            background-color: #f0f0f0;
+     <style>
+        /* Default styles for the table */
+        .table-container {
+            display: flex;
+            flex-direction: column;
         }
 
-        .container {
-            width: 80%;
-            margin: 0 auto;
-            background-color: #fff;
-            border-radius: 10px;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-            overflow: hidden;
+        .table-row {
+            display: flex;
+            justify-content: space-between;
+            border-bottom: 1px solid #ddd;
+            padding: 16px 0;
         }
 
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            border-spacing: 0;
+        .table-cell {
+            flex: 1;
+            padding: 8px;
+            word-break: break-all;
         }
 
-        th, td {
-            padding: 15px;
-            text-align: left;
-        }
+        /* Media query for screens smaller than 600px (phones) */
+        @media screen and (max-width: 600px) {
+            .table-row {
+                flex-direction: column;
+                align-items: flex-start;
+            }
 
-        th {
-            background-color: #0078d4;
-            color: #fff;
-            font-weight: bold;
+            .table-cell {
+                width: 100%;
+                padding: 8px 0;
+            }
         }
-
-        tr:nth-child(even) {
-            background-color: #f2f2f2;
-        }
-
-        tr:hover {
-            background-color: #e2e2e2;
+        
+        /* Additional styles for the first cell on larger screens */
+        @media screen and (min-width: 601px) {
+            .table-cell:first-child {
+                flex: 0 0 60%; /* Set a fixed width of 60% of the viewport */
+            }
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <table>
-            <thead>
-                <tr>
-                    <th>Name</th>
-                    <th>Date Modified</th>
-                    <th>Type</th>
-                    <th>Size</th>
-                </tr>
-            </thead>
-            <tbody>
-            $files
-            </tbody>
+    <div class="table-container">
+        <div class="table-row">
+            <div class="table-cell">Name</div>
+            <div class="table-cell">Modified date</div>
+            <div class="table-cell">Type</div>
+            <div class="table-cell">Size</div>
+        </div>
+        $files
         </table>
     </div>
 </body>
