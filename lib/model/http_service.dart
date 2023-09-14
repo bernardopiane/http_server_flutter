@@ -5,8 +5,6 @@ import 'dart:io';
 import 'package:network_info_plus/network_info_plus.dart';
 import 'package:permission_handler/permission_handler.dart';
 
-import '../functions.dart';
-
 class HttpService extends GetxController {
   final Rx<HttpServer?> _server = Rx<HttpServer?>(null);
   RxString ip = "".obs;
@@ -80,8 +78,6 @@ class HttpService extends GetxController {
             <div class="table-cell">$fileSize</div>
         </div>
           ''';
-
-          return '<tr><td>$fileName</td><td>$modifiedDate</td><td>$fileType</td><td>$fileSize</td></tr>';
         }
 
         return '';
