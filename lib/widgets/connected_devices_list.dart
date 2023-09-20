@@ -16,28 +16,29 @@ class _ConnectedDevicesListState extends State<ConnectedDevicesList> {
   @override
   Widget build(BuildContext context) {
     return Obx(() {
-      if (controller.connectedDevices.isNotEmpty) {
-        return SizedBox(
-          height: 100,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text("Recently connected devices:"),
-              Expanded(
-                child: ListView.builder(
-                    itemCount: controller.connectedDevices.length,
-                    itemBuilder: (context, index) {
-                      return Text(controller.connectedDevices.elementAt(index));
-                    }),
-              ),
-            ],
-          ),
-        );
+      final connectedDevices = controller.connectedDevices;
+
+      if (connectedDevices.isEmpty) {
+        // Return an empty SizedBox if there are no connected devices.
+        return const SizedBox.shrink();
       }
 
-      return const SizedBox(
-        height: 0,
-        width: 0,
+      return SizedBox(
+        height: 100,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text("Recently connected devices:"),
+            Expanded(
+              child: ListView.builder(
+                itemCount: connectedDevices.length,
+                itemBuilder: (context, index) {
+                  return Text(connectedDevices[index]);
+                },
+              ),
+            ),
+          ],
+        ),
       );
     });
   }
