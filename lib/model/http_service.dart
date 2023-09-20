@@ -10,7 +10,7 @@ class HttpService extends GetxController {
   RxString ip = "".obs;
   final info = NetworkInfo();
   final int port = 64578;
-  RxList<String> connectedDevices = RxList<String>();
+  RxList<String> connectedDevices = RxList<String>.empty();
 
   HttpServer? get server => _server.value;
 
@@ -108,7 +108,7 @@ class HttpService extends GetxController {
 
     final String? clientIP = request.connectionInfo?.remoteAddress.address;
 
-    if(!connectedDevices.contains(clientIP!)){
+    if (!connectedDevices.contains(clientIP!)) {
       connectedDevices.add(clientIP);
     }
 
@@ -299,6 +299,7 @@ class HttpService extends GetxController {
       _server.value = null;
       Get.snackbar("Message", "Server has been stopped",
           snackPosition: SnackPosition.BOTTOM);
+      connectedDevices.clear();
     }
   }
 
