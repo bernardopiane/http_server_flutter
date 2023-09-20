@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:permission_handler/permission_handler.dart';
 import 'package:qr_code_scanner/qr_code_scanner.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -16,6 +17,14 @@ class ScannerPageState extends State<ScannerPage> {
   @override
   void initState() {
     super.initState();
+    _requestCameraPermission();
+  }
+
+  Future<void> _requestCameraPermission() async {
+    final status = await Permission.camera.status;
+    if (status.isDenied) {
+      await Permission.camera.request();
+    }
   }
 
   @override
