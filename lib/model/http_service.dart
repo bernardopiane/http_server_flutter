@@ -9,6 +9,8 @@ class HttpService extends GetxController {
   final Rx<HttpServer?> _server = Rx<HttpServer?>(null);
   RxString ip = "".obs;
   final info = NetworkInfo();
+  final int port = 64578;
+  RxList<String> connectedDevices = RxList<String>();
 
   HttpServer? get server => _server.value;
 
@@ -36,7 +38,7 @@ class HttpService extends GetxController {
     }
 
     try {
-      _server.value = await HttpServer.bind(ipAddress, 8080);
+      _server.value = await HttpServer.bind(ipAddress, port);
 
       Get.snackbar("Message", "Server has been started",
           snackPosition: SnackPosition.BOTTOM);
@@ -103,6 +105,12 @@ class HttpService extends GetxController {
   void handleRequest(HttpRequest request, String selectedFolder) async {
     final requestedPath = request.uri.path;
     // TODO add and display list of recently connected IPs
+
+    final String? clientIP = request.connectionInfo?.remoteAddress.address;
+
+    if(!connectedDevices.contains(clientIP!)){
+      connectedDevices.add(clientIP);
+    }
 
     if (requestedPath == '/') {
       final files = await fetchFiles(selectedFolder);

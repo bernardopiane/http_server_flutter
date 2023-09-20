@@ -9,6 +9,7 @@ import 'package:permission_handler/permission_handler.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 
 import '../model/http_service.dart';
+import '../widgets/connected_devices_list.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({Key? key}) : super(key: key);
@@ -169,10 +170,12 @@ class _HomePageState extends State<HomePage> {
         child: SizedBox(
           height: 200,
           width: 200,
-          child: QrImageView(
-            data: "http://${httpService.ip.value}:8080",
-            version: QrVersions.auto,
-          ),
+          child: Obx(() {
+            return QrImageView(
+              data: "http://${httpService.ip.value}:${httpService.port}",
+              version: QrVersions.auto,
+            );
+          }),
         ),
       );
     }
@@ -186,7 +189,7 @@ class _HomePageState extends State<HomePage> {
         Expanded(
           child: Center(
             child: Column(
-              children: _displayInfo(),
+              children: [..._displayInfo(), const ConnectedDevicesList()],
             ),
           ),
         ),
@@ -204,7 +207,7 @@ class _HomePageState extends State<HomePage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisAlignment: MainAxisAlignment.center,
-            children: _displayInfo(),
+            children: [..._displayInfo(), const ConnectedDevicesList()],
           ),
         ),
         _buildQr()
@@ -217,7 +220,7 @@ class _HomePageState extends State<HomePage> {
       Obx(
         () {
           final ipAddress = httpService.ip.value;
-          return Text("IP: $ipAddress");
+          return Text("IP: $ipAddress:${httpService.port}");
         },
       ),
       Text("Selected Folder: $selectedFolder"),
