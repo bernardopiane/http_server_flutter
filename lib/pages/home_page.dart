@@ -189,7 +189,13 @@ class _HomePageState extends State<HomePage> {
         Expanded(
           child: Center(
             child: Column(
-              children: [..._displayInfo(), const ConnectedDevicesList()],
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                ..._displayInfo(),
+                const SizedBox(height: 20), // Add spacing between widgets
+                const ConnectedDevicesList(),
+              ],
             ),
           ),
         ),
@@ -205,12 +211,18 @@ class _HomePageState extends State<HomePage> {
       children: [
         Expanded(
           child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.center,
             mainAxisAlignment: MainAxisAlignment.center,
-            children: [..._displayInfo(), const ConnectedDevicesList()],
+            children: [
+              ..._displayInfo(),
+              const SizedBox(height: 20), // Add spacing between widgets
+              const ConnectedDevicesList(),
+            ],
           ),
         ),
-        _buildQr()
+        Expanded(
+          child: _buildQr(),
+        ),
       ],
     );
   }

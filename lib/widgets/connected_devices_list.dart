@@ -26,14 +26,18 @@ class _ConnectedDevicesListState extends State<ConnectedDevicesList> {
       return SizedBox(
         height: 100,
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+          crossAxisAlignment: CrossAxisAlignment.center,
+          mainAxisAlignment: MainAxisAlignment.center,
           children: [
             const Text("Recently connected devices:"),
             Expanded(
               child: ListView.builder(
                 itemCount: connectedDevices.length,
                 itemBuilder: (context, index) {
-                  return Text(connectedDevices[index]);
+                  return Text(
+                    connectedDevices[index],
+                    textAlign: TextAlign.center,
+                  );
                 },
               ),
             ),
