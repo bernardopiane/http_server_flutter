@@ -220,9 +220,9 @@ class _HomePageState extends State<HomePage> {
             ],
           ),
         ),
-        Expanded(
+        showQr ? Expanded(
           child: _buildQr(),
-        ),
+        ) : const SizedBox.shrink(),
       ],
     );
   }

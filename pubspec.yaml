@@ -54,6 +54,8 @@ dependencies:
       ref: master
   get: ^4.6.6
   intl: ^0.18.1
+  qr_code_scanner:
+  url_launcher:
 
 dev_dependencies:
   flutter_test:
