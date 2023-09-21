@@ -1,7 +1,8 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:permission_handler/permission_handler.dart';
 import 'package:qr_code_scanner/qr_code_scanner.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'dart:io' show Platform;
 
 class ScannerPage extends StatefulWidget {
   const ScannerPage({super.key});
@@ -12,33 +13,24 @@ class ScannerPage extends StatefulWidget {
 
 class ScannerPageState extends State<ScannerPage> {
   final GlobalKey qrKey = GlobalKey(debugLabel: 'QR');
-  late QRViewController controller;
+  Barcode? result;
+  QRViewController? controller;
 
+  // In order to get hot reload to work we need to pause the camera if the platform
+  // is android, or resume the camera if the platform is iOS.
   @override
-  void initState() {
-    super.initState();
-    _requestCameraPermission();
-  }
-
-  Future<void> _requestCameraPermission() async {
-    final status = await Permission.camera.status;
-    if (status.isDenied) {
-      await Permission.camera.request();
+  void reassemble() {
+    super.reassemble();
+    if (Platform.isAndroid) {
+      controller!.pauseCamera();
+    } else if (Platform.isIOS) {
+      controller!.resumeCamera();
     }
-  }
-
-  @override
-  void dispose() {
-    controller.dispose();
-    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('QR Code Scanner'),
-      ),
       body: Column(
         children: <Widget>[
           Expanded(
@@ -48,32 +40,42 @@ class ScannerPageState extends State<ScannerPage> {
               onQRViewCreated: _onQRViewCreated,
             ),
           ),
-          const Expanded(
+          Expanded(
             flex: 1,
             child: Center(
-              child: Text('Scan a QR Code to open a link'),
+              child: (result != null)
+                  ? Text(
+                      'Barcode Type: ${describeEnum(result!.format)}   Data: ${result!.code}')
+                  : Text('Scan a code'),
             ),
-          ),
+          )
         ],
       ),
     );
   }
 
   void _onQRViewCreated(QRViewController controller) {
-    setState(() {
-      this.controller = controller;
-    });
-
+    this.controller = controller;
     controller.scannedDataStream.listen((scanData) {
-      _launchURL(scanData as String);
+      _launchURL(scanData.code!);
+      setState(() {
+        result = scanData;
+      });
     });
+    _launchURL(result!.code!);
   }
 
   Future<void> _launchURL(String url) async {
-    if (await canLaunchUrl(url as Uri)) {
-      await launchUrl(url as Uri);
+    if (await canLaunchUrl(Uri.parse(url))) {
+      await launchUrl(Uri.parse(url));
     } else {
       throw 'Could not launch $url';
     }
+  }
+
+  @override
+  void dispose() {
+    controller?.dispose();
+    super.dispose();
   }
 }
