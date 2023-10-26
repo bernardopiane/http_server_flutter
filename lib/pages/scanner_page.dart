@@ -2,7 +2,6 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:qr_code_scanner/qr_code_scanner.dart';
 import 'package:url_launcher/url_launcher.dart';
-import 'dart:io' show Platform;
 
 class ScannerPage extends StatefulWidget {
   const ScannerPage({super.key});
@@ -16,17 +15,17 @@ class ScannerPageState extends State<ScannerPage> {
   Barcode? result;
   QRViewController? controller;
 
-  // In order to get hot reload to work we need to pause the camera if the platform
-  // is android, or resume the camera if the platform is iOS.
-  @override
-  void reassemble() {
-    super.reassemble();
-    if (Platform.isAndroid) {
-      controller!.pauseCamera();
-    } else if (Platform.isIOS) {
-      controller!.resumeCamera();
-    }
-  }
+  // // In order to get hot reload to work we need to pause the camera if the platform
+  // // is android, or resume the camera if the platform is iOS.
+  // @override
+  // void reassemble() {
+  //   super.reassemble();
+  //   if (Platform.isAndroid) {
+  //     controller!.pauseCamera();
+  //   } else if (Platform.isIOS) {
+  //     controller!.resumeCamera();
+  //   }
+  // }
 
   @override
   Widget build(BuildContext context) {
@@ -46,7 +45,7 @@ class ScannerPageState extends State<ScannerPage> {
               child: (result != null)
                   ? Text(
                       'Barcode Type: ${describeEnum(result!.format)}   Data: ${result!.code}')
-                  : Text('Scan a code'),
+                  : const Text('Scan a code'),
             ),
           )
         ],

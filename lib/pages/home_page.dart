@@ -5,9 +5,9 @@ import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:get/get.dart';
 import 'package:path_provider/path_provider.dart';
-import 'package:permission_handler/permission_handler.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 
+import '../functions.dart';
 import '../model/http_service.dart';
 import '../widgets/connected_devices_list.dart';
 
@@ -26,11 +26,14 @@ class _HomePageState extends State<HomePage> {
   @override
   void initState() {
     super.initState();
+    getPermissions();
+    // TODO Test on real device
     httpService.getIP();
   }
 
   @override
   Widget build(BuildContext context) {
+    checkConnectionStatus();
     return Scaffold(
       appBar: AppBar(
         title: const Text("HTTP Server"),
@@ -51,6 +54,7 @@ class _HomePageState extends State<HomePage> {
   }
 
   void openFilePicker(BuildContext context) async {
+    // TODO fix not getting permission on real device
     Directory? rootDirectory;
 
     if (Platform.isAndroid) {
@@ -80,20 +84,12 @@ class _HomePageState extends State<HomePage> {
       return;
     }
 
-    PermissionStatus status = await Permission.storage.request();
-    if (!status.isGranted) {
-      debugPrint('Permission to access storage not granted.');
-      Fluttertoast.showToast(
-        msg: "Permission to access storage not granted.",
-        toastLength: Toast.LENGTH_SHORT,
-        gravity: ToastGravity.BOTTOM,
-        timeInSecForIosWeb: 1,
-        backgroundColor: Colors.redAccent,
-        textColor: Colors.white,
-        fontSize: 16.0,
-      );
-      return;
-    }
+    // PermissionStatus status = await Permission.storage.request();
+    // if (!status.isGranted) {
+    //   debugPrint('Permission to access storage not granted.');
+    //   Get.snackbar("Error", "Permission to access storage not granted.");
+    //   return;
+    // }
 
     final result = await FilePicker.platform.getDirectoryPath();
     setState(() {
@@ -220,9 +216,11 @@ class _HomePageState extends State<HomePage> {
             ],
           ),
         ),
-        showQr ? Expanded(
-          child: _buildQr(),
-        ) : const SizedBox.shrink(),
+        showQr
+            ? Expanded(
+                child: _buildQr(),
+              )
+            : const SizedBox.shrink(),
       ],
     );
   }

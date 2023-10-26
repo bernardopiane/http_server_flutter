@@ -5,6 +5,8 @@ import 'dart:io';
 import 'package:network_info_plus/network_info_plus.dart';
 import 'package:permission_handler/permission_handler.dart';
 
+import '../functions.dart';
+
 class HttpService extends GetxController {
   final Rx<HttpServer?> _server = Rx<HttpServer?>(null);
   RxString ip = "".obs;
@@ -15,41 +17,43 @@ class HttpService extends GetxController {
   HttpServer? get server => _server.value;
 
   Future<void> startFileServer(String selectedFolder) async {
-    late final String? ipAddress;
+    bool hasConnection = await checkConnectionStatus();
 
-    if (Platform.isWindows) {
-      final interfaces = await NetworkInterface.list();
-      for (var interface in interfaces) {
-        for (var addr in interface.addresses) {
-          if (addr.type == InternetAddressType.IPv4) {
-            ipAddress = addr.address;
+    if (hasConnection) {
+      if (Platform.isWindows) {
+        final interfaces = await NetworkInterface.list();
+        for (var interface in interfaces) {
+          for (var addr in interface.addresses) {
+            if (addr.type == InternetAddressType.IPv4) {
+              ip.value = addr.address;
+            }
           }
         }
+      } else {
+        final info = NetworkInfo();
+        ip.value = (await info.getWifiIP())!;
       }
-    } else {
-      final info = NetworkInfo();
-      ipAddress = await info.getWifiIP();
-    }
 
-    if (_server.value != null) {
-      // Server is already running, stop it first
-      await _server.value!.close(force: true);
-      _server.value = null;
-    }
-
-    try {
-      _server.value = await HttpServer.bind(ipAddress, port);
-
-      Get.snackbar("Message", "Server has been started",
-          snackPosition: SnackPosition.BOTTOM);
-
-      await for (var request in _server.value!) {
-        handleRequest(request, selectedFolder);
+      if (_server.value != null) {
+        // Server is already running, stop it first
+        await _server.value!.close(force: true);
+        _server.value = null;
       }
-    } catch (e) {
-      // Handle the case when the server fails to bind to the IP address
-      if (!Platform.isWindows) {
-        // Handle the error on non-Windows platforms here
+
+      try {
+        _server.value = await HttpServer.bind(ip.value, port);
+
+        Get.snackbar("Message", "Server has been started",
+            snackPosition: SnackPosition.BOTTOM);
+
+        await for (var request in _server.value!) {
+          handleRequest(request, selectedFolder);
+        }
+      } catch (e) {
+        // Handle the case when the server fails to bind to the IP address
+        if (!Platform.isWindows) {
+          // Handle the error on non-Windows platforms here
+        }
       }
     }
   }
