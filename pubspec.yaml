@@ -34,27 +34,22 @@ dependencies:
 
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.
-  cupertino_icons: ^1.0.6
-  path: ^1.8.3
-  network_info_plus: ^4.0.2
-  flutter_background_service: ^5.0.1
-  flutter_local_notifications: ^15.1.1
-  shared_preferences: ^2.2.1
-  device_info_plus: ^9.0.3
-  filesystem_picker: ^3.1.0
-  path_provider: ^2.1.1
-  qr_flutter: ^4.1.0
-  permission_handler: ^11.0.0
-#  Waiting for update - Temp fix for windows
-  file_picker: ^8.0.5
-#    git:
-#      url: https://github.com/kirill-21/flutter_file_picker
-#      ref: master
-  get: ^4.6.6
-  intl: ^0.18.1
+  cupertino_icons:
+  path:
+  network_info_plus:
+  flutter_background_service:
+  flutter_local_notifications:
+  shared_preferences:
+  device_info_plus:
+  path_provider:
+  qr_flutter:
+  permission_handler:
+  file_picker:
+  get:
+  intl:
   qr_code_scanner:
   url_launcher:
-  connectivity:
+  connectivity_plus: ^6.0.3
 
 dev_dependencies:
   flutter_test:

@@ -1,6 +1,6 @@
 import 'dart:io';
 
-import 'package:connectivity/connectivity.dart';
+import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:permission_handler/permission_handler.dart';
@@ -48,13 +48,13 @@ Future<bool> checkConnectionStatus() async {
   final isSupportedPlatform = Platform.isAndroid || Platform.isIOS;
 
   if (isSupportedPlatform) {
-    if (connectivityResult == ConnectivityResult.wifi) {
+    if (connectivityResult.contains(ConnectivityResult.wifi)) {
       return true; // User is connected to WiFi
     }
     // No internet connection or not connected to WiFi
     displaySnackbar("Warning", "Please connect to a WiFi network", warning: true);
   } else {
-    if (connectivityResult == ConnectivityResult.none) {
+    if (connectivityResult.contains(ConnectivityResult.none)) {
       displaySnackbar("Warning", "Please connect to a network", warning: true);
       return false; // No internet connection
     }
