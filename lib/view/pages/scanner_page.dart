@@ -2,7 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:qr_code_scanner/qr_code_scanner.dart';
-import '../view_model/scanner_view_model.dart';
+import '../../view_model/pages/scanner_view_model.dart';
 
 class ScannerPage extends StatelessWidget {
   const ScannerPage({Key? key}) : super(key: key);

@@ -3,7 +3,7 @@ import 'package:get/get.dart';
 import 'package:http_server/view/connected_devices_list.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 
-import '../view_model/home_page_view_model.dart';
+import '../../view_model/pages/home_page_view_model.dart';
 
 class HomePage extends StatelessWidget {
   const HomePage({Key? key}) : super(key: key);

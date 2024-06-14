@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 import 'dart:io';
@@ -43,8 +44,7 @@ class HttpService extends GetxController {
       try {
         _server.value = await HttpServer.bind(ip.value, port);
 
-        Get.snackbar("Message", "Server has been started",
-            snackPosition: SnackPosition.BOTTOM);
+        displaySnackbar("Info", "Server has been started");
 
         await for (var request in _server.value!) {
           handleRequest(request, selectedFolder);
@@ -301,8 +301,7 @@ class HttpService extends GetxController {
     if (httpServer != null) {
       await httpServer.close(force: true);
       _server.value = null;
-      Get.snackbar("Message", "Server has been stopped",
-          snackPosition: SnackPosition.BOTTOM);
+      displaySnackbar("Info", "Server has been stopped");
       connectedDevices.clear();
     }
   }

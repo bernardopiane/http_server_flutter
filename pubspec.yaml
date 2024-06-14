@@ -45,7 +45,6 @@ dependencies:
   path_provider: ^2.1.1
   qr_flutter: ^4.1.0
   permission_handler: ^11.0.0
-  fluttertoast: ^8.2.2
 #  Waiting for update - Temp fix for windows
   file_picker:
     git:

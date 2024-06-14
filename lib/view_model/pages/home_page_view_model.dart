@@ -2,11 +2,10 @@ import 'dart:io';
 
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
-import 'package:fluttertoast/fluttertoast.dart';
 import 'package:get/get.dart';
 import 'package:path_provider/path_provider.dart';
-import '../model/http_service.dart';
-import '../functions.dart';
+import '../../model/http_service.dart';
+import '../../functions.dart';
 
 class HomePageViewModel extends GetxController {
   var selectedFolder = "".obs;
@@ -61,15 +60,7 @@ class HomePageViewModel extends GetxController {
       httpService.startFileServer(selectedFolder.value);
     } else {
       if (!Platform.isWindows) {
-        Fluttertoast.showToast(
-          msg: "No files in folder",
-          toastLength: Toast.LENGTH_SHORT,
-          gravity: ToastGravity.BOTTOM,
-          timeInSecForIosWeb: 1,
-          backgroundColor: Colors.white,
-          textColor: Colors.black,
-          fontSize: 16.0,
-        );
+        displaySnackbar("Warning", "No files in folder", warning: true);
       }
       showQr.value = false;
       selectedFolder.value = "No folder selected";

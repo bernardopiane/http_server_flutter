@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import '../view_model/selection_view_model.dart';
+import '../../view_model/pages/selection_view_model.dart';
 
 class SelectionPage extends StatelessWidget {
   const SelectionPage({Key? key}) : super(key: key);
