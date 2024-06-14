@@ -1,13 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:http_server/pages/home_page.dart';
-import 'package:http_server/pages/scanner_page.dart';
+import '../view_model/selection_view_model.dart';
 
 class SelectionPage extends StatelessWidget {
   const SelectionPage({Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
+    final SelectionViewModel viewModel = Get.put(SelectionViewModel());
+
     return SafeArea(
       child: Scaffold(
         body: Column(
@@ -16,9 +17,7 @@ class SelectionPage extends StatelessWidget {
           children: [
             Expanded(
               child: GestureDetector(
-                onTap: () {
-                  Get.to(() => const HomePage());
-                },
+                onTap: viewModel.goToHomePage,
                 child: Container(
                   color: Colors.blue,
                   child: const Center(
@@ -36,9 +35,7 @@ class SelectionPage extends StatelessWidget {
             ),
             Expanded(
               child: GestureDetector(
-                onTap: () {
-                  Get.to(() => const ScannerPage());
-                },
+                onTap: viewModel.goToScannerPage,
                 child: Container(
                   color: Colors.green,
                   child: const Center(
