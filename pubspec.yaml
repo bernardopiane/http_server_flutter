@@ -46,10 +46,10 @@ dependencies:
   qr_flutter: ^4.1.0
   permission_handler: ^11.0.0
 #  Waiting for update - Temp fix for windows
-  file_picker:
-    git:
-      url: https://github.com/kirill-21/flutter_file_picker
-      ref: master
+  file_picker: ^8.0.5
+#    git:
+#      url: https://github.com/kirill-21/flutter_file_picker
+#      ref: master
   get: ^4.6.6
   intl: ^0.18.1
   qr_code_scanner:
