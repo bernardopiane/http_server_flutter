@@ -4,6 +4,9 @@ import 'package:http_server/view/connected_devices_list.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 
 import '../../view_model/pages/home_page_view_model.dart';
+import '../ip_address_display.dart';
+import '../selected_folder_display.dart';
+import '../server_control_button.dart';
 
 class HomePage extends StatelessWidget {
   const HomePage({Key? key}) : super(key: key);
@@ -39,7 +42,8 @@ class HomePage extends StatelessWidget {
             height: 200,
             width: 200,
             child: QrImageView(
-              data: "http://${viewModel.httpService.ip.value}:${viewModel.httpService.port}",
+              data:
+                  "http://${viewModel.httpService.ip.value}:${viewModel.httpService.port}",
               version: QrVersions.auto,
             ),
           ),
@@ -90,8 +94,8 @@ class HomePage extends StatelessWidget {
         Obx(() {
           return viewModel.showQr.value
               ? Expanded(
-            child: _buildQr(viewModel),
-          )
+                  child: _buildQr(viewModel),
+                )
               : const SizedBox.shrink();
         }),
       ],
@@ -100,38 +104,9 @@ class HomePage extends StatelessWidget {
 
   List<Widget> _displayInfo(HomePageViewModel viewModel, BuildContext context) {
     return [
-      Obx(() {
-        final ipAddress = viewModel.httpService.ip.value;
-        return Text("IP: $ipAddress:${viewModel.httpService.port}");
-      }),
-      Obx(() => Text("Selected Folder: ${viewModel.selectedFolder.value}")),
-      Padding(
-        padding: const EdgeInsets.symmetric(vertical: 16.0),
-        child: Obx(() {
-          return AnimatedSwitcher(
-            duration: const Duration(milliseconds: 125),
-            transitionBuilder: (Widget child, Animation<double> animation) {
-              return FadeTransition(opacity: animation, child: child);
-            },
-            child: viewModel.showQr.value
-                ? KeyedSubtree(
-              key: UniqueKey(),
-              child: ElevatedButton(
-                style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
-                onPressed: viewModel.stopServer,
-                child: const Text('Stop Server'),
-              ),
-            )
-                : KeyedSubtree(
-              key: UniqueKey(),
-              child: ElevatedButton(
-                onPressed: () => viewModel.openFilePicker(context),
-                child: const Text('Start Server'),
-              ),
-            ),
-          );
-        }),
-      ),
+      IPAddressDisplay(viewModel: viewModel),
+      SelectedFolderDisplay(viewModel: viewModel),
+      ServerControlButton(viewModel: viewModel),
     ];
   }
 }
